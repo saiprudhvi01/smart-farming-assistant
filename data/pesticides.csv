@@ -1,0 +1,11 @@
+Crop,Type,Amount,Application
+wheat,Fungicide,2.5 kg/hectare,Pre-flowering stage
+rice,Insecticide,1.5 liters/hectare,15 days after transplanting
+maize,Herbicide,2 liters/hectare,Pre-emergence
+barley,Fungicide,2 kg/hectare,Boot stage
+millet,Insecticide,1 liter/hectare,45 days after sowing
+cotton,Insecticide,2 liters/hectare,Flower initiation
+sugarcane,Herbicide,3 liters/hectare,35 days after planting
+tomato,Fungicide,1.5 kg/hectare,Flowering stage
+potato,Insecticide,2 kg/hectare,60 days after planting
+onion,Fungicide,1 kg/hectare,Bulb development stage

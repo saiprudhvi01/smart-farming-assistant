@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: streamlit-inf
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "streamlit run run_complete_app.py"
+    plan: free
