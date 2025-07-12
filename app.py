@@ -2420,7 +2420,7 @@ def show_agent_offers():
                                     accept_message = translate_text(accept_message, current_lang)
                                 send_sms_notification(offer['buyer_phone'], accept_message)
                                 st.success("Offer accepted and buyer notified!")
-                        st.rerun()
+                                st.rerun()
                             else:
                                 st.error("Failed to accept offer.")
                     
@@ -2434,7 +2434,7 @@ def show_agent_offers():
                                     reject_message = translate_text(reject_message, current_lang)
                                 send_sms_notification(offer['buyer_phone'], reject_message)
                                 st.warning("Offer rejected and buyer notified.")
-                        st.rerun()
+                                st.rerun()
                             else:
                                 st.error("Failed to reject offer.")
         
@@ -2517,7 +2517,7 @@ def show_agent_market_management():
                 st.info("📱 Price update notification will be sent to farmers.")
                 
                 # Refresh the page to show updated prices
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("❌ Failed to update market price. Please try again.")
     
