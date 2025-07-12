@@ -9,3 +9,4 @@ seaborn
 plotly
 openpyxl
 twilio
+flask

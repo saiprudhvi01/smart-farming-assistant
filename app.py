@@ -9,10 +9,25 @@ import numpy as np
 import hashlib
 import json
 from datetime import datetime, timedelta
-from twilio.rest import Client
-from twilio.twiml.messaging_response import MessagingResponse
+# Optional imports for SMS functionality
+try:
+    from twilio.rest import Client
+    from twilio.twiml.messaging_response import MessagingResponse
+    TWILIO_AVAILABLE = True
+except ImportError:
+    TWILIO_AVAILABLE = False
+    Client = None
+    MessagingResponse = None
+
+try:
+    from flask import Flask, request
+    FLASK_AVAILABLE = True
+except ImportError:
+    FLASK_AVAILABLE = False
+    Flask = None
+    request = None
+
 import threading
-from flask import Flask, request
 import subprocess
 
 # Initialize database and translator
