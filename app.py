@@ -449,15 +449,18 @@ if 'crop_listings' not in st.session_state:
         }
     ]
 
-# Load pre-trained model
+# Load pre-trained enhanced model and encoder
 @st.cache_resource
 def load_model():
     try:
-        with open('crop_recommendation_model.pkl', 'rb') as f:
-            return pickle.load(f)
+        with open('enhanced_crop_model.pkl', 'rb') as f:
+            model = pickle.load(f)
+        with open('water_resource_encoder.pkl', 'rb') as f:
+            encoder = pickle.load(f)
+        return model, encoder
     except FileNotFoundError:
-        st.error("Model file not found. Please run train_model.py first to train the model.")
-        return None
+        st.error("Enhanced model files not found. Please run train_enhanced_model.py first to train the model.")
+        return None, None
 
 # Load data files
 @st.cache_data
@@ -706,7 +709,7 @@ def get_crop_image_url(crop_name):
     return crop_images.get(crop_name.lower(), 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=300&h=200&fit=crop')
 
 # Function to get recommendation (no caching)
-def get_recommendation(location, weather_data, model):
+def get_recommendation(location, weather_data, model, encoder):
     temperature = weather_data['current']['temp_c']
     humidity = weather_data['current']['humidity']
     weather_desc = weather_data['current']['condition']['text']
@@ -714,7 +717,18 @@ def get_recommendation(location, weather_data, model):
     # Get location-specific soil data
     soil_info = get_location_soil_data(location, None)
     
-    # Prepare input for model prediction
+    # Map water resource based on rainfall
+    if soil_info['rainfall'] < 600:
+        water_resource = 'Low'
+    elif soil_info['rainfall'] < 1200:
+        water_resource = 'Medium'
+    else:
+        water_resource = 'High'
+    
+    # Encode water resource
+    water_resource_encoded = encoder.transform([water_resource])[0]
+    
+    # Prepare input for model prediction (enhanced model expects 8 features)
     input_features = np.array([[
         temperature,
         humidity,
@@ -722,10 +736,11 @@ def get_recommendation(location, weather_data, model):
         soil_info['P'],
         soil_info['K'],
         soil_info['pH'],
-        soil_info['rainfall']
+        soil_info['rainfall'],
+        water_resource_encoded
     ]])
     
-# Get crop recommendation with confidence filtering
+    # Get crop recommendation with confidence filtering
     prediction_proba = model.predict_proba(input_features)[0]
     confidence = max(prediction_proba) * 100
     
@@ -745,20 +760,35 @@ def get_recommendation(location, weather_data, model):
         'soil_info': soil_info.to_dict(),
         'recommended_crop': recommended_crop,
         'confidence': confidence,
-        'input_features': input_features.tolist()
+        'input_features': input_features.tolist(),
+        'water_resource': water_resource
     }
     
     st.success("✨ Fresh recommendation computed!")
     return result_data
 
 # Function to get recommendation with manual soil data
-def get_recommendation_with_manual_soil(location, weather_data, model, manual_soil_data):
+def get_recommendation_with_manual_soil(location, weather_data, model, encoder, manual_soil_data):
     temperature = weather_data['current']['temp_c']
     humidity = weather_data['current']['humidity']
     weather_desc = weather_data['current']['condition']['text']
     
+    # Estimate rainfall based on moisture level (simple mapping)
+    rainfall_estimate = manual_soil_data['Moisture'] * 20  # Convert moisture % to rainfall estimate
+    
+    # Map water resource based on rainfall estimate
+    if rainfall_estimate < 600:
+        water_resource = 'Low'
+    elif rainfall_estimate < 1200:
+        water_resource = 'Medium'
+    else:
+        water_resource = 'High'
+    
+    # Encode water resource
+    water_resource_encoded = encoder.transform([water_resource])[0]
+    
     # Use manual soil data instead of location-based
-    # Convert manual soil data to model input format
+    # Convert manual soil data to model input format (enhanced model expects 8 features)
     input_features = np.array([[
         temperature,
         humidity,
@@ -766,7 +796,8 @@ def get_recommendation_with_manual_soil(location, weather_data, model, manual_so
         manual_soil_data['P'],
         manual_soil_data['K'],
         manual_soil_data['pH'],
-        800  # Default rainfall value, can be enhanced later
+        rainfall_estimate,
+        water_resource_encoded
     ]])
     
     # Get crop recommendation with confidence filtering
@@ -776,7 +807,7 @@ def get_recommendation_with_manual_soil(location, weather_data, model, manual_so
     # Check if confidence meets 90% threshold
     if confidence < 90:
         # Get water-based recommendations instead
-        recommended_crop = get_water_based_recommendation(800, temperature, humidity)
+        recommended_crop = get_water_based_recommendation(rainfall_estimate, temperature, humidity)
         confidence = 90.0  # Set to 90% for water-based recommendations
     else:
         recommended_crop = model.predict(input_features)[0]
@@ -789,7 +820,9 @@ def get_recommendation_with_manual_soil(location, weather_data, model, manual_so
         'soil_info': manual_soil_data,
         'recommended_crop': recommended_crop,
         'confidence': confidence,
-        'input_features': input_features.tolist()
+        'input_features': input_features.tolist(),
+        'water_resource': water_resource,
+        'rainfall_estimate': rainfall_estimate
     }
     
     st.success("✨ Fresh recommendation computed with your soil data!")
@@ -1323,9 +1356,9 @@ def show_crop_recommendation_module():
     # Get current language
     current_lang = st.session_state.get('current_language', 'en')
     
-    model = load_model()
-    if model is None:
-        error_msg = "Model not loaded. Please check the model file."
+    model, encoder = load_model()
+    if model is None or encoder is None:
+        error_msg = "Enhanced model not loaded. Please check the model files."
         if current_lang != 'en':
             error_msg = translate_text(error_msg, current_lang)
         st.error(error_msg)
@@ -1549,7 +1582,7 @@ def show_crop_recommendation_module():
                     'Soil_Type': soil_type
                 }
                 
-                result = get_recommendation_with_manual_soil(location, weather_data, model, manual_soil_data)
+                result = get_recommendation_with_manual_soil(location, weather_data, model, encoder, manual_soil_data)
                 
                 # Display results with enhanced styling
                 st.markdown("---")

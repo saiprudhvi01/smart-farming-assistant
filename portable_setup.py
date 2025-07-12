@@ -5,6 +5,7 @@ This script makes the project portable by handling path dependencies
 """
 
 import os
+import os
 import sys
 import shutil
 import subprocess
@@ -193,6 +194,35 @@ SOIL_DATA_PATHS = [
     with open("config.py", "w") as f:
         f.write(config_content)
     print("✓ Created config.py")
+
+def clear_streamlit_cache():
+    """Clear Streamlit cache to force reloading of models"""
+    print("🧹 Clearing Streamlit cache...")
+    
+    cache_dirs = [
+        ".streamlit/cache",
+        ".streamlit",
+        "__pycache__",
+        ".pytest_cache"
+    ]
+    
+    for cache_dir in cache_dirs:
+        if os.path.exists(cache_dir):
+            try:
+                shutil.rmtree(cache_dir)
+                print(f"✓ Cleared cache directory: {cache_dir}")
+            except Exception as e:
+                print(f"⚠️  Could not clear {cache_dir}: {e}")
+    
+    # Also clear any .pyc files
+    for root, dirs, files in os.walk("."):
+        for file in files:
+            if file.endswith(".pyc"):
+                try:
+                    os.remove(os.path.join(root, file))
+                    print(f"✓ Removed compiled file: {file}")
+                except Exception as e:
+                    print(f"⚠️  Could not remove {file}: {e}")
 
 def verify_portability():
     """Verify that the project is now portable"""
