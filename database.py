@@ -108,6 +108,7 @@ class DatabaseManager:
         # Create default admin user if doesn't exist
         self.create_default_admin()
         self.create_default_agent()
+        self.create_sample_data()
     
     def create_default_admin(self):
         """Create a default admin user"""
@@ -140,6 +141,60 @@ class DatabaseManager:
                 address="Agent Office"
             )
             print(f"Default agent created: {agent_email} / {agent_password}")
+    
+    def create_sample_data(self):
+        """Create sample data for demonstration (only if no data exists)"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Check if sample data already exists
+        cursor.execute('SELECT COUNT(*) FROM crop_listings')
+        if cursor.fetchone()[0] > 0:
+            conn.close()
+            return  # Data already exists
+        
+        try:
+            # Create sample farmers
+            farmer_users = [
+                ("Ramesh Kumar", "farmer1@test.com", "farmer123", "farmer", "+919876543210", "Village Ramgarh, Rajasthan"),
+                ("Sunita Devi", "farmer2@test.com", "farmer123", "farmer", "+919876543211", "Village Khetri, Haryana"),
+                ("Mohan Singh", "farmer3@test.com", "farmer123", "farmer", "+919876543212", "Village Bhiwani, Punjab")
+            ]
+            
+            farmer_ids = []
+            for farmer in farmer_users:
+                farmer_id = self.create_user(*farmer)
+                if farmer_id:
+                    farmer_ids.append(farmer_id)
+            
+            # Create sample buyers
+            buyer_users = [
+                ("Anil Traders", "buyer1@test.com", "buyer123", "buyer", "+919876543220", "Mumbai, Maharashtra"),
+                ("Grain Merchants", "buyer2@test.com", "buyer123", "buyer", "+919876543221", "Delhi, India")
+            ]
+            
+            for buyer in buyer_users:
+                self.create_user(*buyer)
+            
+            # Create sample crop listings
+            if farmer_ids:
+                sample_listings = [
+                    (farmer_ids[0], "wheat", 1000, 20.0, "Premium quality wheat, organic", "Ramgarh, Rajasthan"),
+                    (farmer_ids[0], "rice", 800, 25.0, "Basmati rice, excellent quality", "Ramgarh, Rajasthan"),
+                    (farmer_ids[1] if len(farmer_ids) > 1 else farmer_ids[0], "cotton", 500, 55.0, "High quality cotton", "Khetri, Haryana"),
+                    (farmer_ids[2] if len(farmer_ids) > 2 else farmer_ids[0], "sugarcane", 2000, 28.0, "Fresh sugarcane", "Bhiwani, Punjab"),
+                    (farmer_ids[0], "tomato", 300, 40.0, "Fresh tomatoes", "Ramgarh, Rajasthan")
+                ]
+                
+                for listing in sample_listings:
+                    self.create_crop_listing(*listing)
+            
+            print("Sample data created successfully!")
+            
+        except Exception as e:
+            print(f"Error creating sample data: {e}")
+        finally:
+            conn.close()
     
     def hash_password(self, password: str) -> str:
         """Hash password using SHA-256"""
