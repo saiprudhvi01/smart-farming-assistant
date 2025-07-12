@@ -2043,7 +2043,7 @@ def show_offer_submission_module():
                             st.success("✅ Your offer has been submitted and notifications sent!")
                             st.balloons()
                             del st.session_state.selected_listing
-                        st.rerun()
+                            st.rerun()
                         else:
                             st.error("❌ Failed to submit offer. Please try again.")
     else:
