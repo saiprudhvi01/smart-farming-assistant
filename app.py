@@ -245,7 +245,7 @@ st.markdown("""
         font-weight: 700;
     }
     
-    /* Input fields with crystal clear focus states */
+    /* Input fields with crystal clear focus states and proper text visibility */
     .stTextInput > div > div > input,
     .stNumberInput > div > div > input,
     .stSelectbox > div > div > select,
@@ -255,7 +255,8 @@ st.markdown("""
         padding: 0.75rem 1rem;
         font-size: 0.95rem;
         transition: all 0.3s;
-        background: white;
+        background: white !important;
+        color: black !important;
     }
     .stTextInput > div > div > input:focus,
     .stNumberInput > div > div > input:focus,
@@ -1885,7 +1886,7 @@ def show_crop_listings_for_buyers():
                 # Make offer button
                 if st.button(f"Make Offer for {listing['crop_name']}", key=f"offer_{listing['id']}"):
                     st.session_state.selected_listing = listing
-                    st.experimental_rerun()
+                    st.rerun()
     else:
         no_listings_msg = "No crop listings available at the moment."
         if current_lang != 'en':
@@ -2042,7 +2043,7 @@ def show_offer_submission_module():
                             st.success("✅ Your offer has been submitted and notifications sent!")
                             st.balloons()
                             del st.session_state.selected_listing
-                            st.experimental_rerun()
+                        st.rerun()
                         else:
                             st.error("❌ Failed to submit offer. Please try again.")
     else:
@@ -2077,7 +2078,7 @@ def show_farmer_offers():
                                 st.success("Offer accepted. Transaction created.")
                             else:
                                 st.error("Failed to accept offer.")
-                            st.experimental_rerun()
+                        st.rerun()
                     with col2:
                         if st.button(f"Reject Offer {offer['id']}"):
                             success = db_manager.update_offer_status(offer['id'], 'rejected')
@@ -2085,7 +2086,7 @@ def show_farmer_offers():
                                 st.warning("Offer rejected.")
                             else:
                                 st.error("Failed to reject offer.")
-                            st.experimental_rerun()
+                        st.rerun()
                 else:
                     st.write(f"**Offer Status:** {offer['status'].title()}")
     else:
@@ -2419,7 +2420,7 @@ def show_agent_offers():
                                     accept_message = translate_text(accept_message, current_lang)
                                 send_sms_notification(offer['buyer_phone'], accept_message)
                                 st.success("Offer accepted and buyer notified!")
-                                st.experimental_rerun()
+                        st.rerun()
                             else:
                                 st.error("Failed to accept offer.")
                     
@@ -2433,7 +2434,7 @@ def show_agent_offers():
                                     reject_message = translate_text(reject_message, current_lang)
                                 send_sms_notification(offer['buyer_phone'], reject_message)
                                 st.warning("Offer rejected and buyer notified.")
-                                st.experimental_rerun()
+                        st.rerun()
                             else:
                                 st.error("Failed to reject offer.")
         
@@ -2559,7 +2560,7 @@ def main():
             
         if st.sidebar.button(logout_text):
             logout_user()
-            st.experimental_rerun()
+            st.rerun()
     else:
         # Login section
         login_title = "Account"
@@ -2587,7 +2588,7 @@ def main():
             password = st.sidebar.text_input(password_label, type="password")
             if st.sidebar.button(login_text):
                 if login_user(email, password):
-                    st.experimental_rerun()
+                    st.rerun()
 
         elif page == register_text:
             create_account_text = "Create New Account"
